@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/error_background"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <android.support.v7.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/margin_16"
+        android:layout_marginStart="@dimen/margin_16"
+        android:gravity="center"
+        android:text="@string/something_went_wrong_text"
+        android:textColor="@color/white"
+        android:textSize="@dimen/font_size_54sp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/retryButton"
+        android:layout_marginTop="@dimen/margin_44"
+        android:background="@color/button_bg_grey"
+        android:gravity="center"
+        android:text="@string/retry_text"
+        android:textAllCaps="true"
+        android:textColor="@color/white" />
+</LinearLayout>

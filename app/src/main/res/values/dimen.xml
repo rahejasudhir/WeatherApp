@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="margin_10">10dp</dimen>
+    <dimen name="margin_16">16dp</dimen>
+    <dimen name="margin_44">44dp</dimen>
+    <dimen name="margin_56">56dp</dimen>
+    <dimen name="margin_62">62dp</dimen>
+    <dimen name="height_80">80dp</dimen>
+
+    <dimen name="width_96">96dp</dimen>
+    <dimen name="height_96">96dp</dimen>
+
+    <!--line spacing-->
+    <dimen name="line_spacing_112">112sp</dimen>
+    <dimen name="line_spacing_52">52sp</dimen>
+    <dimen name="line_spacing_19">19sp</dimen>
+
+    <!-- font sizes -->
+    <dimen name="font_size_96sp">96sp</dimen>
+    <dimen name="font_size_36sp">36sp</dimen>
+    <dimen name="font_size_16sp">16sp</dimen>
+    <dimen name="font_size_54sp">54sp</dimen>
+</resources>

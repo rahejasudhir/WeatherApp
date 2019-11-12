@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">MyApplicationWea</string>
+
+    <string name="temp_text">%1$.1f C</string>
+    <string name="current_temp">%1$.1f \u00B0</string>
+    <string name="wind_speed">Wind Speed: %s</string>
+    <string name="retry_text">retry</string>
+    <string name="temp_data_text">Cal Std Dev</string>
+    <string name="std_dev_text">Std Deviation: %.2f</string>
+    <string name="something_went_wrong_text">Something went wrong at our end!</string>
+</resources>
