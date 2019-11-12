@@ -17,6 +17,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function5;
+import io.reactivex.schedulers.Schedulers;
 
 public class WeatherViewModel extends ViewModel {
 
@@ -63,7 +64,7 @@ public class WeatherViewModel extends ViewModel {
     public void fetchStandardDeviation() {
 
 
-        Disposable disposable = Observable.zip(weatherRepository.fetchNext1Weather(), weatherRepository.fetchNext2Weather(), weatherRepository.fetchNext3Weather(), weatherRepository.fetchNext4Weather(), weatherRepository.fetchNext5Weather(), new Function5<WeatherResponse, WeatherResponse, WeatherResponse,WeatherResponse, WeatherResponse, Double>() {
+        Disposable disposable = Observable.zip(weatherRepository.fetchNext1Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext2Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext3Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext4Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext5Weather().subscribeOn(Schedulers.newThread()), new Function5<WeatherResponse, WeatherResponse, WeatherResponse,WeatherResponse, WeatherResponse, Double>() {
 
             @Override
             public Double apply(WeatherResponse w1, WeatherResponse w2, WeatherResponse w3, WeatherResponse w4, WeatherResponse w5) throws Exception {
