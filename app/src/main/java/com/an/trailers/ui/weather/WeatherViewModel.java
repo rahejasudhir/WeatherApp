@@ -6,55 +6,59 @@ import android.util.Log;
 
 import com.an.trailers.data.remote.api.WeatherApiService;
 import com.an.trailers.data.remote.model.WeatherResponse;
+import com.an.trailers.data.repository.Repository;
 import com.an.trailers.data.repository.WeatherRepository;
-import com.an.trailers.schedulers.SchedulerProvider;
-
+import com.an.trailers.schedulers.BaseSchedulerProvider;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function5;
-import io.reactivex.schedulers.Schedulers;
 
 public class WeatherViewModel extends ViewModel {
 
-    private WeatherRepository weatherRepository;
+    private Repository repository;
     private CompositeDisposable mDisposables = new CompositeDisposable();
 
     public MutableLiveData<WeatherResponse> getWeatherLiveData() {
         return weatherLiveData;
     }
 
+    public MutableLiveData<Throwable> getThrowable() {
+        return throwableMutableLiveData;
+    }
+
+
     private MutableLiveData<WeatherResponse> weatherLiveData = new MutableLiveData<>();
+
+    private MutableLiveData<Throwable> throwableMutableLiveData = new MutableLiveData<>();
 
     public MutableLiveData<Double> getStdDevLiveData() {
         return stdDevLiveData;
     }
 
     private MutableLiveData<Double> stdDevLiveData = new MutableLiveData<>();
-    private SchedulerProvider schedulerProvider;
+    private BaseSchedulerProvider schedulerProvider;
 
     @Inject
-    public WeatherViewModel(WeatherApiService weatherApiService){
-        weatherRepository = new WeatherRepository(weatherApiService);
-        schedulerProvider = SchedulerProvider.getInstance();
+    public WeatherViewModel(WeatherApiService weatherApiService, BaseSchedulerProvider provider){
+        this.repository = new WeatherRepository(weatherApiService);
+        this.schedulerProvider = provider;
 
     }
 
     public void fetchWeatherForeCasts() {
-        mDisposables.add(weatherRepository.fetchWeatherForeCasts()
-                .subscribeOn(schedulerProvider.io()).observeOn(schedulerProvider.ui())
+        mDisposables.add(repository.fetchWeatherForeCasts()
+                .subscribeOn(this.schedulerProvider.io()).observeOn(this.schedulerProvider.ui())
                 .subscribe(this::onForeCastFetched, throwable -> {
-                    onForesCastFetchFailed();
+                    onForesCastFetchFailed(throwable);
                     throwable.printStackTrace();
                 }));
     }
 
-    private void onForesCastFetchFailed() {
-
+    private void onForesCastFetchFailed(Throwable throwable) {
+        throwableMutableLiveData.postValue(throwable);
     }
 
     private void onForeCastFetched(WeatherResponse forecastModel) {
@@ -63,48 +67,46 @@ public class WeatherViewModel extends ViewModel {
 
     public void fetchStandardDeviation() {
 
+        Disposable disposable = Observable.zip(repository.fetchNext1Weather(),
+                repository.fetchNext2Weather(),
+                repository.fetchNext3Weather(),
+                repository.fetchNext4Weather(),
+                repository.fetchNext5Weather(),
+                (w1, w2, w3, w4, w5) -> {
+                    Log.v("Sudhir1", w1.toString());
+                    Log.v("Sudhir2", w2.toString());
+                    Log.v("Sudhir3", w3.toString());
+                    Log.v("Sudhir4", w4.toString());
+                    Log.v("Sudhir5", w5.toString());
+                    double temp1  = w1.getWeather().getTemp();
+                    double temp2  = w2.getWeather().getTemp();
+                    double temp3  = w3.getWeather().getTemp();
+                    double temp4  = w4.getWeather().getTemp();
+                    double temp5  = w5.getWeather().getTemp();
 
-        Disposable disposable = Observable.zip(weatherRepository.fetchNext1Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext2Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext3Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext4Weather().subscribeOn(Schedulers.newThread()), weatherRepository.fetchNext5Weather().subscribeOn(Schedulers.newThread()), new Function5<WeatherResponse, WeatherResponse, WeatherResponse,WeatherResponse, WeatherResponse, Double>() {
+                    return summation(temp1,temp2,temp3,temp4,temp5);
+                }).subscribeOn(schedulerProvider.io()).observeOn(schedulerProvider.ui())
+                .subscribe(weatherResponse -> {
+                    Log.v("SudhirDouble", weatherResponse.toString());
+                    stdDevLiveData.postValue(weatherResponse);
+                }, throwable -> {
 
-            @Override
-            public Double apply(WeatherResponse w1, WeatherResponse w2, WeatherResponse w3, WeatherResponse w4, WeatherResponse w5) throws Exception {
-                Log.v("Sudhir1", w1.toString());
-                Log.v("Sudhir2", w2.toString());
-                Log.v("Sudhir3", w3.toString());
-                Log.v("Sudhir4", w4.toString());
-                Log.v("Sudhir5", w5.toString());
-                double temp1  = w1.getWeather().getTemp();
-                double temp2  = w2.getWeather().getTemp();
-                double temp3  = w3.getWeather().getTemp();
-                double temp4  = w4.getWeather().getTemp();
-                double temp5  = w5.getWeather().getTemp();
-
-                double averageTemp = temp1 + temp2 + temp3 + temp4 + temp5;
-                averageTemp = averageTemp / 5 ;
-
-                Log.v("SudhirMean", String.valueOf(averageTemp));
-
-                double sumation =  (Math.pow((temp1 - averageTemp), 2) + Math.pow((temp2 - averageTemp), 2) +Math.pow((temp3 - averageTemp), 2) +Math.pow((temp4 - averageTemp), 2) + Math.pow((temp5 - averageTemp), 2));
-                sumation = sumation / 4;
-                sumation = Math.sqrt(sumation);
-
-                return sumation;
-            }
-        }).subscribeOn(schedulerProvider.io()).observeOn(schedulerProvider.ui())
-                .subscribe(new Consumer<Double>() {
-                    @Override
-                    public void accept(Double weatherResponse) throws Exception {
-                        Log.v("SudhirDouble", weatherResponse.toString());
-                        stdDevLiveData.postValue(weatherResponse);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-
-                    }
                 });
 
         mDisposables.add(disposable);
+    }
+
+    public double summation(double temp1, double temp2, double temp3, double temp4, double temp5){
+        double averageTemp = temp1 + temp2 + temp3 + temp4 + temp5;
+        averageTemp = averageTemp / 5 ;
+
+        //Log.v("SudhirMean", String.valueOf(averageTemp));
+
+        double sumation =  (Math.pow((temp1 - averageTemp), 2) + Math.pow((temp2 - averageTemp), 2) +Math.pow((temp3 - averageTemp), 2) +Math.pow((temp4 - averageTemp), 2) + Math.pow((temp5 - averageTemp), 2));
+        sumation = sumation / 4;
+        sumation = Math.sqrt(sumation);
+
+        return sumation;
     }
 
     @Override

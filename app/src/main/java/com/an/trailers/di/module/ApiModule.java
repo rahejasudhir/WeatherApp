@@ -3,6 +3,8 @@ package com.an.trailers.di.module;
 import android.app.Application;
 
 import com.an.trailers.data.remote.api.WeatherApiService;
+import com.an.trailers.schedulers.BaseSchedulerProvider;
+import com.an.trailers.schedulers.SchedulerProvider;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
@@ -73,6 +75,11 @@ public class ApiModule {
     @Singleton
     WeatherApiService provideWeatherApiService(Retrofit retrofit) {
         return retrofit.create(WeatherApiService.class);
+    }
+
+    @Provides
+    BaseSchedulerProvider provideSchedulerProvider() {
+        return new SchedulerProvider();
     }
 
 }

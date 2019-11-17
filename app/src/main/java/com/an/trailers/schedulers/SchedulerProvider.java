@@ -10,20 +10,6 @@ import io.reactivex.schedulers.Schedulers;
 
 public class SchedulerProvider implements BaseSchedulerProvider{
 
-    @Nullable
-    private static SchedulerProvider INSTANCE;
-
-
-    private SchedulerProvider() {
-    }
-
-    public static synchronized SchedulerProvider getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new SchedulerProvider();
-        }
-        return INSTANCE;
-    }
-
     @NonNull
     @Override
     public Scheduler computation() {
