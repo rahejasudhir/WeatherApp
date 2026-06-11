@@ -42,7 +42,7 @@ jobs:
       - name: Switch to JDK 17 for Android SDK tools
         run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
-      - name: Write button-finder script
+      - name: Write capture scripts
         run: |
           cat > /tmp/find_button.py << 'PYEOF'
           import xml.etree.ElementTree as ET, re, sys
@@ -54,6 +54,27 @@ jobs:
                       print((nums[0]+nums[2])//2, (nums[1]+nums[3])//2)
                       sys.exit(0)
           PYEOF
+          cat > /tmp/capture.sh << 'SHEOF'
+          #!/bin/bash
+          set -e
+          mkdir -p screenshots
+          adb install app/build/outputs/apk/debug/app-debug.apk
+          adb shell am start -n com.an.trailers/.ui.weather.WeatherActivity
+          sleep 10
+          adb shell screencap -p /sdcard/screen1.png
+          adb pull /sdcard/screen1.png screenshots/weather_current.png
+          adb shell uiautomator dump /sdcard/ui.xml
+          adb pull /sdcard/ui.xml /tmp/ui.xml
+          python3 /tmp/find_button.py > /tmp/coords.txt || true
+          if [ -s /tmp/coords.txt ]; then
+            read X Y < /tmp/coords.txt
+            adb shell input tap "$X" "$Y"
+            sleep 6
+          fi
+          adb shell screencap -p /sdcard/screen2.png
+          adb pull /sdcard/screen2.png screenshots/weather_std_dev.png
+          SHEOF
+          chmod +x /tmp/capture.sh
 
       - name: Run emulator and capture screenshots
         uses: reactivecircus/android-emulator-runner@v2
@@ -63,27 +84,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: |
-            mkdir -p screenshots
-            adb install app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -n com.an.trailers/.ui.weather.WeatherActivity
-            sleep 10
-
-            adb shell screencap -p /sdcard/screen1.png
-            adb pull /sdcard/screen1.png screenshots/weather_current.png
-
-            adb shell uiautomator dump /sdcard/ui.xml
-            adb pull /sdcard/ui.xml /tmp/ui.xml
-            python3 /tmp/find_button.py > /tmp/coords.txt || true
-
-            if [ -s /tmp/coords.txt ]; then
-              read X Y < /tmp/coords.txt
-              adb shell input tap "$X" "$Y"
-              sleep 6
-            fi
-
-            adb shell screencap -p /sdcard/screen2.png
-            adb pull /sdcard/screen2.png screenshots/weather_std_dev.png
+          script: bash /tmp/capture.sh
 
       - name: Commit screenshots to repo
         run: |
