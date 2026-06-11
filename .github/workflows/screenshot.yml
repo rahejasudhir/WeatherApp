@@ -59,10 +59,19 @@ jobs:
           set -e
           mkdir -p screenshots
           adb install app/build/outputs/apk/debug/app-debug.apk
+
+          # Start screen recording in background before launching the app
+          adb shell screenrecord --time-limit 30 /sdcard/demo.mp4 &
+          RECORD_PID=$!
+
           adb shell am start -n com.an.trailers/.ui.weather.WeatherActivity
           sleep 10
+
+          # Screenshot 1: current weather loaded
           adb shell screencap -p /sdcard/screen1.png
           adb pull /sdcard/screen1.png screenshots/weather_current.png
+
+          # Find and tap the std dev button
           adb shell uiautomator dump /sdcard/ui.xml
           adb pull /sdcard/ui.xml /tmp/ui.xml
           python3 /tmp/find_button.py > /tmp/coords.txt || true
@@ -71,8 +80,15 @@ jobs:
             adb shell input tap "$X" "$Y"
             sleep 6
           fi
+
+          # Screenshot 2: std dev result
           adb shell screencap -p /sdcard/screen2.png
           adb pull /sdcard/screen2.png screenshots/weather_std_dev.png
+
+          # Stop recording and pull video
+          kill $RECORD_PID 2>/dev/null || true
+          sleep 2
+          adb pull /sdcard/demo.mp4 screenshots/demo.mp4 || true
           SHEOF
           chmod +x /tmp/capture.sh
 
@@ -86,10 +102,10 @@ jobs:
           disable-animations: true
           script: bash /tmp/capture.sh
 
-      - name: Commit screenshots to repo
+      - name: Commit screenshots and video to repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add screenshots/
-          git diff --cached --quiet || git commit -m "Add app screenshots [skip ci]"
+          git diff --cached --quiet || git commit -m "Add app screenshots and demo video [skip ci]"
           git push
