@@ -2,6 +2,10 @@
 
 An Android weather application built with Java that displays current weather conditions and a 5-day forecast, including statistical analysis of temperature variation.
 
+## Demo
+
+https://github.com/rahejasudhir/WeatherApp/raw/master/screenshots/demo.mp4
+
 ## Screenshots
 
 | Current Weather | Temperature Std Dev |
