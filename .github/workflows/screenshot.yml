@@ -13,10 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 17 (stores path for emulator step)
         uses: actions/setup-java@v4
         with:
           java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up JDK 11 (Gradle 5.x compatible, becomes active JAVA_HOME)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
           distribution: 'temurin'
 
       - name: Enable KVM
@@ -29,6 +35,9 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+
+      - name: Switch to JDK 17 for Android SDK tools
+        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
       - name: Run emulator and capture screenshots
         uses: reactivecircus/android-emulator-runner@v2
