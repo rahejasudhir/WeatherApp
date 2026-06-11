@@ -42,6 +42,19 @@ jobs:
       - name: Switch to JDK 17 for Android SDK tools
         run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
 
+      - name: Write button-finder script
+        run: |
+          cat > /tmp/find_button.py << 'PYEOF'
+          import xml.etree.ElementTree as ET, re, sys
+          tree = ET.parse('/tmp/ui.xml')
+          for node in tree.iter():
+              if 'temperature data' in node.get('text', '').lower():
+                  nums = list(map(int, re.findall(r'\d+', node.get('bounds', ''))))
+                  if len(nums) == 4:
+                      print((nums[0]+nums[2])//2, (nums[1]+nums[3])//2)
+                      sys.exit(0)
+          PYEOF
+
       - name: Run emulator and capture screenshots
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -61,16 +74,7 @@ jobs:
 
             adb shell uiautomator dump /sdcard/ui.xml
             adb pull /sdcard/ui.xml /tmp/ui.xml
-            python3 -c "
-            import xml.etree.ElementTree as ET, re, sys
-            tree = ET.parse('/tmp/ui.xml')
-            for node in tree.iter():
-                if 'temperature data' in node.get('text', '').lower():
-                    nums = list(map(int, re.findall(r'\d+', node.get('bounds', ''))))
-                    if len(nums) == 4:
-                        print((nums[0]+nums[2])//2, (nums[1]+nums[3])//2)
-                        sys.exit(0)
-            " > /tmp/coords.txt || true
+            python3 /tmp/find_button.py > /tmp/coords.txt || true
 
             if [ -s /tmp/coords.txt ]; then
               read X Y < /tmp/coords.txt
